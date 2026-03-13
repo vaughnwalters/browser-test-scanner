@@ -4,54 +4,6 @@ const fs = require( 'fs' );
 const path = require( 'path' );
 const https = require( 'https' );
 
-/**
- * Parse command-line arguments.
- *
- * @param {string} defaultOutput - Default output filename
- * @return {Object} Parsed arguments with repoUrl and outputFile
- */
-function parseArgs( defaultOutput ) {
-	const args = process.argv.slice( 2 );
-	const scriptName = path.basename( process.argv[ 1 ] );
-
-	if ( args.length === 0 || args.includes( '--help' ) || args.includes( '-h' ) ) {
-		console.log( `Usage: node ${ scriptName } <repo-url-or-path> [--output <file>]
-
-Arguments:
-  repo-url-or-path   Git repository URL or local directory path
-  --output, -o       Output JSON file path (default: ${ defaultOutput })
-
-Examples:
-  node ${ scriptName } https://gerrit.wikimedia.org/r/mediawiki/extensions/CampaignEvents
-  node ${ scriptName } ./my-project --output my-tests.json` );
-		process.exit( args.length === 0 ? 1 : 0 );
-	}
-
-	let repoUrl = null;
-	let outputFile = defaultOutput;
-
-	for ( let i = 0; i < args.length; i++ ) {
-		if ( args[ i ] === '--output' || args[ i ] === '-o' ) {
-			i++;
-			if ( i < args.length ) {
-				outputFile = args[ i ];
-			} else {
-				console.error( 'Error: --output requires a file path argument' );
-				process.exit( 1 );
-			}
-		} else if ( !repoUrl ) {
-			repoUrl = args[ i ];
-		}
-	}
-
-	if ( !repoUrl ) {
-		console.error( 'Error: repository URL or path is required' );
-		process.exit( 1 );
-	}
-
-	return { repoUrl, outputFile };
-}
-
 // ---------------------------------------------------------------------------
 // HTTP helpers
 // ---------------------------------------------------------------------------
@@ -81,7 +33,7 @@ function httpGet( url ) {
 }
 
 // ---------------------------------------------------------------------------
-// Remote provider: Gitiles (Gerrit)
+// Gitiles (Gerrit) API
 // ---------------------------------------------------------------------------
 
 /**
@@ -91,7 +43,6 @@ function httpGet( url ) {
  * @return {{ baseUrl: string, repoPath: string, branch: string }}
  */
 function parseGitilesUrl( url ) {
-	// https://gerrit.wikimedia.org/r/mediawiki/extensions/CampaignEvents
 	const match = url.match( /^(https:\/\/[^/]+\/r)\/(.+?)$/ );
 	if ( !match ) {
 		throw new Error( `Cannot parse Gerrit URL: ${ url }` );
@@ -158,167 +109,22 @@ async function gitilesReadFile( baseUrl, repoPath, branch, filePath ) {
 	return Buffer.from( body, 'base64' ).toString( 'utf-8' );
 }
 
-// ---------------------------------------------------------------------------
-// Remote provider: GitHub
-// ---------------------------------------------------------------------------
-
 /**
- * Parse a GitHub repository URL into its components.
- *
- * @param {string} url - e.g. https://github.com/user/repo
- * @return {{ owner: string, repo: string, branch: string }}
- */
-function parseGithubUrl( url ) {
-	const match = url.match( /github\.com\/([^/]+)\/([^/]+?)(?:\.git)?$/ );
-	if ( !match ) {
-		throw new Error( `Cannot parse GitHub URL: ${ url }` );
-	}
-	return {
-		owner: match[ 1 ],
-		repo: match[ 2 ],
-		branch: 'main'
-	};
-}
-
-/**
- * Get the full file tree from a GitHub repo.
- *
- * @param {string} owner - Repo owner
- * @param {string} repo - Repo name
- * @param {string} branch - Branch name
- * @return {Promise<string[]>} List of all file paths
- */
-async function githubListAllFiles( owner, repo, branch ) {
-	const url = `https://api.github.com/repos/${ owner }/${ repo }/git/trees/${ branch }?recursive=1`;
-	let body;
-	try {
-		body = await httpGet( url );
-	} catch {
-		// Try 'master' if 'main' fails
-		if ( branch === 'main' ) {
-			const fallbackUrl = `https://api.github.com/repos/${ owner }/${ repo }/git/trees/master?recursive=1`;
-			body = await httpGet( fallbackUrl );
-		} else {
-			throw new Error( `Cannot list files from GitHub repo ${ owner }/${ repo }` );
-		}
-	}
-
-	const json = JSON.parse( body );
-	return json.tree
-		.filter( ( entry ) => entry.type === 'blob' )
-		.map( ( entry ) => entry.path );
-}
-
-/**
- * Fetch a file's content from GitHub.
- *
- * @param {string} owner - Repo owner
- * @param {string} repo - Repo name
- * @param {string} branch - Branch name
- * @param {string} filePath - File path within the repo
- * @return {Promise<string>} File content
- */
-async function githubReadFile( owner, repo, branch, filePath ) {
-	const url = `https://raw.githubusercontent.com/${ owner }/${ repo }/${ branch }/${ filePath }`;
-	return httpGet( url );
-}
-
-// ---------------------------------------------------------------------------
-// Remote provider interface
-// ---------------------------------------------------------------------------
-
-/**
- * Detect the remote provider type from a URL.
- *
- * @param {string} url - Repository URL
- * @return {'gitiles'|'github'|null}
- */
-function detectProvider( url ) {
-	if ( /gerrit\.[^/]+\/r\//.test( url ) ) {
-		return 'gitiles';
-	}
-	if ( /github\.com\//.test( url ) ) {
-		return 'github';
-	}
-	return null;
-}
-
-/**
- * Create a remote file provider for a given URL.
+ * Create a Gitiles provider for a given Gerrit URL.
  *
  * @param {string} url - Repository URL
  * @return {Object} Provider with listFiles(dir) and readFile(path) methods
  */
-function createRemoteProvider( url ) {
-	const providerType = detectProvider( url );
-
-	if ( providerType === 'gitiles' ) {
-		const { baseUrl, repoPath, branch } = parseGitilesUrl( url );
-		return {
-			type: 'gitiles',
-			listFiles: ( dir ) => gitilesListFiles( baseUrl, repoPath, branch, dir ),
-			readFile: ( filePath ) => gitilesReadFile( baseUrl, repoPath, branch, filePath )
-		};
-	}
-
-	if ( providerType === 'github' ) {
-		const { owner, repo, branch } = parseGithubUrl( url );
-		let allFilesCache = null;
-		return {
-			type: 'github',
-			listFiles: async ( dir ) => {
-				// GitHub tree API returns everything at once, so cache it
-				if ( !allFilesCache ) {
-					allFilesCache = await githubListAllFiles( owner, repo, branch );
-				}
-				const prefix = dir ? dir + '/' : '';
-				return allFilesCache.filter( ( f ) => f.startsWith( prefix ) );
-			},
-			readFile: ( filePath ) => githubReadFile( owner, repo, branch, filePath )
-		};
-	}
-
-	return null;
+function createProvider( url ) {
+	const { baseUrl, repoPath, branch } = parseGitilesUrl( url );
+	return {
+		listFiles: ( dir ) => gitilesListFiles( baseUrl, repoPath, branch, dir ),
+		readFile: ( filePath ) => gitilesReadFile( baseUrl, repoPath, branch, filePath )
+	};
 }
 
 // ---------------------------------------------------------------------------
-// Local file operations
-// ---------------------------------------------------------------------------
-
-/**
- * Recursively find files matching a pattern in a local directory.
- *
- * @param {string} dir - Directory to search
- * @param {RegExp} pattern - Filename pattern to match
- * @param {Array} results - Accumulator for results
- * @return {string[]} Matching file paths
- */
-function findFiles( dir, pattern, results = [] ) {
-	let entries;
-	try {
-		entries = fs.readdirSync( dir, { withFileTypes: true } );
-	} catch {
-		return results;
-	}
-
-	for ( const entry of entries ) {
-		const fullPath = path.join( dir, entry.name );
-
-		if ( entry.isDirectory() ) {
-			if ( [ 'node_modules', 'vendor', '.git' ].includes( entry.name ) ) {
-				continue;
-			}
-			findFiles( fullPath, pattern, results );
-		} else if ( pattern.test( entry.name ) ) {
-			results.push( fullPath );
-		}
-	}
-
-	return results;
-}
-
-// ---------------------------------------------------------------------------
-// Spec file filtering (shared between local and remote)
+// Spec file filtering
 // ---------------------------------------------------------------------------
 
 /**
@@ -356,13 +162,13 @@ function isSpecFile( filePath ) {
 }
 
 /**
- * Find spec files in given directories using a remote provider.
+ * Find spec files in given directories using a provider.
  *
- * @param {Object} provider - Remote provider with listFiles method
+ * @param {Object} provider - Provider with listFiles method
  * @param {string[]} dirs - Directories to scan
  * @return {Promise<string[]>} List of spec file paths
  */
-async function findRemoteSpecs( provider, dirs ) {
+async function findSpecs( provider, dirs ) {
 	const specFiles = new Set();
 
 	for ( const dir of dirs ) {
@@ -377,40 +183,12 @@ async function findRemoteSpecs( provider, dirs ) {
 	return Array.from( specFiles );
 }
 
-/**
- * Find spec files in given directories on the local filesystem.
- *
- * @param {string} repoPath - Repository root path
- * @param {string[]} dirs - Directories to scan (relative to repoPath)
- * @return {string[]} List of spec file absolute paths
- */
-function findLocalSpecs( repoPath, dirs ) {
-	const plainJsPattern = /\.(js|ts|mjs|cjs|jsx|tsx)$/;
-	const specFiles = new Set();
-
-	for ( const dir of dirs ) {
-		const fullDir = path.join( repoPath, dir );
-		if ( fs.existsSync( fullDir ) ) {
-			const files = findFiles( fullDir, plainJsPattern );
-			for ( const file of files ) {
-				const relPath = path.relative( repoPath, file );
-				if ( isSpecFile( relPath ) ) {
-					specFiles.add( file );
-				}
-			}
-		}
-	}
-
-	return Array.from( specFiles );
-}
-
 // ---------------------------------------------------------------------------
-// Test parsing (works on content strings, framework-agnostic)
+// Test parsing
 // ---------------------------------------------------------------------------
 
 /**
  * Parse test content to extract describe/it blocks.
- * Works for any framework using Mocha-style describe/it syntax.
  *
  * @param {string} content - File content
  * @param {string} filePath - File path (for filter context)
@@ -492,7 +270,7 @@ function parseContent( content, filePath, filter ) {
 }
 
 /**
- * Flatten suites into a human-readable map of describe name -> test names.
+ * Flatten suites into a map of describe name -> test names.
  * Nested describes are joined with " > ".
  *
  * @param {Object[]} suites - Array of suite objects
@@ -544,7 +322,7 @@ function detectFramework( content, filePath ) {
 }
 
 // ---------------------------------------------------------------------------
-// Test map builders
+// Test map builder
 // ---------------------------------------------------------------------------
 
 /**
@@ -567,47 +345,14 @@ function buildFileEntry( parsed ) {
 }
 
 /**
- * Build the tests map from local spec files, grouped by file.
- *
- * @param {string[]} specFiles - Array of local file paths
- * @param {Function} [filter] - Optional content filter
- * @param {string} [repoPath] - Repo root for computing relative paths
- * @return {{ tests: Object, totalTests: number, totalSuites: number, totalFiles: number }}
- */
-function buildTestMapLocal( specFiles, filter, repoPath ) {
-	const tests = {};
-	let totalTests = 0;
-	let totalSuites = 0;
-
-	for ( const specFile of specFiles ) {
-		const content = fs.readFileSync( specFile, 'utf-8' );
-		const parsed = parseContent( content, specFile, filter );
-		if ( parsed && parsed.suites.length > 0 ) {
-			const relPath = repoPath ? path.relative( repoPath, specFile ) : specFile;
-			const entry = buildFileEntry( parsed );
-			tests[ relPath ] = entry.suites;
-			totalTests += entry.testCount;
-			totalSuites += entry.suiteCount;
-		}
-	}
-
-	return {
-		tests,
-		totalTests,
-		totalSuites,
-		totalFiles: Object.keys( tests ).length
-	};
-}
-
-/**
  * Build the tests map from remote spec files, grouped by file.
  *
- * @param {Object} provider - Remote provider with readFile method
+ * @param {Object} provider - Provider with readFile method
  * @param {string[]} specFiles - Array of remote file paths
  * @param {Function} [filter] - Optional content filter
- * @return {Promise<{ tests: Object, totalTests: number, totalSuites: number, totalFiles: number }>}
+ * @return {Promise<{ tests: Object, totalTests: number, totalSuites: number, totalFiles: number, frameworks: string[] }>}
  */
-async function buildTestMapRemote( provider, specFiles, filter ) {
+async function buildTestMap( provider, specFiles, filter ) {
 	const tests = {};
 	let totalTests = 0;
 	let totalSuites = 0;
@@ -646,7 +391,7 @@ async function buildTestMapRemote( provider, specFiles, filter ) {
 /**
  * Derive a short name from a repo URL for use in filenames.
  *
- * @param {string} url - Repository URL or local path
+ * @param {string} url - Repository URL
  * @return {string} Short name
  */
 function repoSlug( url ) {
@@ -657,17 +402,6 @@ function repoSlug( url ) {
 		.replace( /[^a-zA-Z0-9-]/g, '_' )
 		.replace( /_+/g, '_' )
 		.replace( /^_|_$/g, '' );
-}
-
-/**
- * Build a default output filename from the repo URL and a suffix.
- *
- * @param {string} repoUrl - Repository URL or local path
- * @param {string} suffix - e.g. 'wdio' or 'cypress'
- * @return {string} Filename like 'gerrit_wikimedia_org_r_mediawiki_core_wdio.json'
- */
-function defaultOutputName( repoUrl, suffix ) {
-	return `${ repoSlug( repoUrl ) }_${ suffix }.json`;
 }
 
 // ---------------------------------------------------------------------------
@@ -694,19 +428,9 @@ function writeOutput( outputFile, output ) {
 // ---------------------------------------------------------------------------
 
 module.exports = {
-	parseArgs,
-	detectProvider,
-	createRemoteProvider,
-	findFiles,
-	findLocalSpecs,
-	findRemoteSpecs,
-	isSpecFile,
-	parseContent,
-	flattenSuites,
-	detectFramework,
-	buildTestMapLocal,
-	buildTestMapRemote,
+	createProvider,
+	findSpecs,
+	buildTestMap,
 	repoSlug,
-	defaultOutputName,
 	writeOutput
 };

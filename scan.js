@@ -14,11 +14,9 @@
 const fs = require( 'fs' );
 const path = require( 'path' );
 const {
-	createRemoteProvider,
-	findLocalSpecs,
-	findRemoteSpecs,
-	buildTestMapLocal,
-	buildTestMapRemote,
+	createProvider,
+	findSpecs,
+	buildTestMap,
 	repoSlug,
 	writeOutput
 } = require( './parser' );
@@ -69,20 +67,9 @@ function readRepoList( filePath ) {
 }
 
 async function scanRepo( repoUrl ) {
-	const provider = createRemoteProvider( repoUrl );
-
-	if ( provider ) {
-		const specFiles = await findRemoteSpecs( provider, TEST_DIRS );
-		return buildTestMapRemote( provider, specFiles, isBrowserTest );
-	}
-
-	const repoPath = path.resolve( repoUrl );
-	if ( !fs.existsSync( repoPath ) ) {
-		throw new Error( `path does not exist: ${ repoPath }` );
-	}
-
-	const specFiles = findLocalSpecs( repoPath, TEST_DIRS );
-	return buildTestMapLocal( specFiles, isBrowserTest, repoPath );
+	const provider = createProvider( repoUrl );
+	const specFiles = await findSpecs( provider, TEST_DIRS );
+	return buildTestMap( provider, specFiles, isBrowserTest );
 }
 
 async function scanAll() {
@@ -102,13 +89,6 @@ async function scanAll() {
 	const summary = [];
 
 	for ( const repoUrl of repos ) {
-		const provider = createRemoteProvider( repoUrl );
-		if ( !provider ) {
-			console.log( `  SKIP  ${ repoUrl } (unsupported host)` );
-			summary.push( { repository: repoUrl, status: 'unsupported' } );
-			continue;
-		}
-
 		let result;
 		try {
 			result = await scanRepo( repoUrl );
