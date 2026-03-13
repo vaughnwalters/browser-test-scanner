@@ -24,6 +24,8 @@ Edit `repos.txt` to add or remove repos. One URL per line, lines starting with `
 
 ## Single repo
 
+To scan just one repo at a time:
+
 ```bash
 node scan.js <repo-url-or-path>
 ```
