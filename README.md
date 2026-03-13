@@ -2,19 +2,21 @@
 
 Scans git repositories for WebdriverIO and Cypress tests and outputs JSON files listing all test suites and test cases, grouped by spec file.
 
+All results are written to the `results/` directory with descriptive filenames.
+
 ## Scripts
 
-| Script | Purpose | Default output |
-|---|---|---|
-| `list-wdio-tests.js` | Scan a single repo for WebdriverIO tests | `wdio-tests.json` |
-| `list-cypress-tests.js` | Scan a single repo for Cypress tests | `cypress-tests.json` |
-| `scan-repos.js` | Scan multiple repos, auto-detect framework | `results/` directory |
+| Script | Purpose |
+|---|---|
+| `list-wdio-tests.js` | Scan a single repo for WebdriverIO tests |
+| `list-cypress-tests.js` | Scan a single repo for Cypress tests |
+| `scan-repos.js` | Scan multiple repos, auto-detect framework |
 
 ## Single repo
 
 ```bash
-node list-wdio-tests.js <repo-url-or-path> [--output <file>]
-node list-cypress-tests.js <repo-url-or-path> [--output <file>]
+node list-wdio-tests.js <repo-url-or-path>
+node list-cypress-tests.js <repo-url-or-path>
 ```
 
 ### Examples
@@ -22,11 +24,13 @@ node list-cypress-tests.js <repo-url-or-path> [--output <file>]
 ```bash
 # WebdriverIO tests from a remote Gerrit repo
 node list-wdio-tests.js https://gerrit.wikimedia.org/r/mediawiki/extensions/CampaignEvents
+# -> results/gerrit_wikimedia_org_r_mediawiki_extensions_CampaignEvents_wdio.json
 
 # Cypress tests from a remote Gerrit repo
 node list-cypress-tests.js https://gerrit.wikimedia.org/r/mediawiki/extensions/GrowthExperiments
+# -> results/gerrit_wikimedia_org_r_mediawiki_extensions_GrowthExperiments_cypress.json
 
-# Local repo with custom output file
+# Custom output path
 node list-wdio-tests.js ./my-project --output my-tests.json
 ```
 
@@ -77,10 +81,9 @@ Then run:
 
 ```bash
 node scan-repos.js repos.txt
-node scan-repos.js repos.txt --output-dir my-results/
 ```
 
-This auto-detects whether each repo uses WebdriverIO, Cypress, both, or neither, then runs the appropriate scanner. Output goes to `results/` by default:
+This auto-detects whether each repo uses WebdriverIO, Cypress, both, or neither, then runs the appropriate scanner.
 
 ```
 results/
