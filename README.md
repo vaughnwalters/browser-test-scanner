@@ -1,11 +1,19 @@
-# wdio-test-scanner
+# Browser Test Scanner
 
-Scans a git repository for WebdriverIO tests and outputs a JSON file mapping describe blocks to test names.
+Scans git repositories for WebdriverIO and Cypress tests and outputs JSON files mapping describe blocks to test names.
+
+## Scripts
+
+| Script | Detects | Default output |
+|---|---|---|
+| `list-wdio-tests.js` | WebdriverIO / Selenium tests | `wdio-tests.json` |
+| `list-cypress-tests.js` | Cypress tests | `cypress-tests.json` |
 
 ## Usage
 
 ```bash
 node list-wdio-tests.js <repo-url-or-path> [--output <file>]
+node list-cypress-tests.js <repo-url-or-path> [--output <file>]
 ```
 
 ### Arguments
@@ -13,24 +21,24 @@ node list-wdio-tests.js <repo-url-or-path> [--output <file>]
 | Argument | Description |
 |---|---|
 | `repo-url-or-path` | Git repository URL or local directory path |
-| `--output`, `-o` | Output JSON file path (default: `wdio-tests.json`) |
+| `--output`, `-o` | Output JSON file path |
 
 ### Examples
 
 ```bash
-# Scan a remote repo (clones, scans, cleans up automatically)
+# WebdriverIO tests from a remote repo
 node list-wdio-tests.js https://gerrit.wikimedia.org/r/mediawiki/extensions/CampaignEvents
 
-# Scan a local repo
-node list-wdio-tests.js /path/to/my/project
+# Cypress tests from a remote repo
+node list-cypress-tests.js https://gerrit.wikimedia.org/r/mediawiki/extensions/GrowthExperiments
 
-# Scan current directory with custom output file
-node list-wdio-tests.js . --output my-tests.json
+# Local repo with custom output
+node list-wdio-tests.js ./my-project --output my-tests.json
 ```
 
 ## Output
 
-The script produces a JSON file like this:
+Each script produces a JSON file like this:
 
 ```json
 {
@@ -49,15 +57,6 @@ The script produces a JSON file like this:
       "is configured correctly",
       "requires event data",
       "can be enabled"
-    ],
-    "Event page": [
-      "can have one user register publicly",
-      "can have one user register privately",
-      "can have a user cancel registration"
-    ],
-    "MyEvents": [
-      "can allow organizer to search events by name",
-      "can allow organizer to delete registration of first event in My Events"
     ]
   }
 }
@@ -65,12 +64,13 @@ The script produces a JSON file like this:
 
 Each key in `tests` is the `describe()` block name. Each value is an array of `it()` test names. Nested describes are joined with ` > `.
 
-## What it detects
+## Project structure
 
-- WebdriverIO config files (`wdio.conf.js`, `.ts`, `.mjs`, `.cjs`)
-- Test specs in common directories (`tests/selenium/specs`, `tests/e2e`, `tests/wdio`, etc.)
-- Mocha-style `describe()` / `it()` blocks, including nested suites
-- Works with both ES module `import` and CommonJS `require` style tests
+```
+lib/parser.js          # Shared parsing and utility functions
+list-wdio-tests.js     # WebdriverIO test scanner
+list-cypress-tests.js  # Cypress test scanner
+```
 
 ## Requirements
 
