@@ -10,14 +10,16 @@
 
 'use strict';
 
+const fs = require( 'fs' );
 const path = require( 'path' );
 const {
 	parseArgs,
-	resolveRepo,
-	cleanupDir,
+	createRemoteProvider,
 	findFiles,
-	findSpecsInDirs,
-	buildTestMap,
+	findLocalSpecs,
+	findRemoteSpecs,
+	buildTestMapLocal,
+	buildTestMapRemote,
 	writeOutput
 } = require( './lib/parser' );
 
@@ -55,32 +57,42 @@ function isWdioTest( content, filePath ) {
 		filePath.includes( 'e2e' );
 }
 
-function main() {
+async function main() {
 	const { repoUrl, outputFile } = parseArgs( 'wdio-tests.json' );
-	const { repoPath, isCloned } = resolveRepo( repoUrl );
+	const provider = createRemoteProvider( repoUrl );
 
-	try {
+	let tests, totalTests, totalSuites;
+
+	if ( provider ) {
+		console.log( `Scanning ${ repoUrl } via ${ provider.type } API...` );
+
+		const specFiles = await findRemoteSpecs( provider, WDIO_DIRS );
+		console.log( `Found ${ specFiles.length } potential test file(s)` );
+
+		( { tests, totalTests, totalSuites } = await buildTestMapRemote( provider, specFiles, isWdioTest ) );
+	} else {
+		const repoPath = path.resolve( repoUrl );
+		if ( !fs.existsSync( repoPath ) ) {
+			console.error( `Error: path does not exist: ${ repoPath }` );
+			process.exit( 1 );
+		}
+
 		const configs = findFiles( repoPath, /^wdio\.conf\.(js|ts|mjs|cjs)$/ );
 		console.log( `Found ${ configs.length } WebdriverIO config(s)` );
 
-		const specFiles = Array.from( findSpecsInDirs( repoPath, WDIO_DIRS ) );
+		const specFiles = findLocalSpecs( repoPath, WDIO_DIRS );
 		console.log( `Found ${ specFiles.length } potential test file(s)` );
 
-		const { tests, totalTests, totalSuites } = buildTestMap( specFiles, isWdioTest );
-
-		writeOutput( outputFile, {
-			repository: repoUrl,
-			generatedAt: new Date().toISOString(),
-			totalSuites,
-			totalTests,
-			tests
-		} );
-	} finally {
-		if ( isCloned ) {
-			console.log( 'Cleaning up temporary clone...' );
-			cleanupDir( repoPath );
-		}
+		( { tests, totalTests, totalSuites } = buildTestMapLocal( specFiles, isWdioTest ) );
 	}
+
+	writeOutput( outputFile, {
+		repository: repoUrl,
+		generatedAt: new Date().toISOString(),
+		totalSuites,
+		totalTests,
+		tests
+	} );
 }
 
 main();

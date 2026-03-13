@@ -10,14 +10,16 @@
 
 'use strict';
 
+const fs = require( 'fs' );
 const path = require( 'path' );
 const {
 	parseArgs,
-	resolveRepo,
-	cleanupDir,
+	createRemoteProvider,
 	findFiles,
-	findSpecsInDirs,
-	buildTestMap,
+	findLocalSpecs,
+	findRemoteSpecs,
+	buildTestMapLocal,
+	buildTestMapRemote,
 	writeOutput
 } = require( './lib/parser' );
 
@@ -45,32 +47,42 @@ function isCypressTest( content, filePath ) {
 		filePath.includes( 'cypress' );
 }
 
-function main() {
+async function main() {
 	const { repoUrl, outputFile } = parseArgs( 'cypress-tests.json' );
-	const { repoPath, isCloned } = resolveRepo( repoUrl );
+	const provider = createRemoteProvider( repoUrl );
 
-	try {
+	let tests, totalTests, totalSuites;
+
+	if ( provider ) {
+		console.log( `Scanning ${ repoUrl } via ${ provider.type } API...` );
+
+		const specFiles = await findRemoteSpecs( provider, CYPRESS_DIRS );
+		console.log( `Found ${ specFiles.length } potential test file(s)` );
+
+		( { tests, totalTests, totalSuites } = await buildTestMapRemote( provider, specFiles, isCypressTest ) );
+	} else {
+		const repoPath = path.resolve( repoUrl );
+		if ( !fs.existsSync( repoPath ) ) {
+			console.error( `Error: path does not exist: ${ repoPath }` );
+			process.exit( 1 );
+		}
+
 		const configs = findFiles( repoPath, /^cypress\.(config\.(js|ts|mjs|cjs)|json)$/ );
 		console.log( `Found ${ configs.length } Cypress config(s)` );
 
-		const specFiles = Array.from( findSpecsInDirs( repoPath, CYPRESS_DIRS ) );
+		const specFiles = findLocalSpecs( repoPath, CYPRESS_DIRS );
 		console.log( `Found ${ specFiles.length } potential test file(s)` );
 
-		const { tests, totalTests, totalSuites } = buildTestMap( specFiles, isCypressTest );
-
-		writeOutput( outputFile, {
-			repository: repoUrl,
-			generatedAt: new Date().toISOString(),
-			totalSuites,
-			totalTests,
-			tests
-		} );
-	} finally {
-		if ( isCloned ) {
-			console.log( 'Cleaning up temporary clone...' );
-			cleanupDir( repoPath );
-		}
+		( { tests, totalTests, totalSuites } = buildTestMapLocal( specFiles, isCypressTest ) );
 	}
+
+	writeOutput( outputFile, {
+		repository: repoUrl,
+		generatedAt: new Date().toISOString(),
+		totalSuites,
+		totalTests,
+		tests
+	} );
 }
 
 main();
