@@ -22,32 +22,20 @@ const {
 } = require( './parser' );
 
 const TEST_DIRS = [
-	'tests/selenium/specs',
 	'tests/selenium',
-	'test/selenium/specs',
 	'test/selenium',
-	'tests/e2e/specs',
 	'tests/e2e',
-	'test/e2e/specs',
 	'test/e2e',
-	'tests/wdio/specs',
 	'tests/wdio',
-	'test/wdio/specs',
 	'test/wdio',
 	'tests/browser',
 	'test/browser',
+	'tests/cypress',
+	'test/cypress',
 	'selenium',
 	'e2e',
 	'specs',
-	'cypress/e2e',
-	'cypress/integration',
-	'cypress/specs',
-	'tests/cypress',
-	'tests/cypress/e2e',
-	'tests/cypress/integration',
-	'test/cypress',
-	'test/cypress/e2e',
-	'test/cypress/integration'
+	'cypress'
 ];
 
 function isBrowserTest( content, filePath ) {
