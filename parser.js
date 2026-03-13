@@ -518,6 +518,32 @@ function flattenSuites( suites, prefix ) {
 }
 
 // ---------------------------------------------------------------------------
+// Framework detection
+// ---------------------------------------------------------------------------
+
+/**
+ * Detect whether a test file is WebdriverIO or Cypress.
+ *
+ * @param {string} content - File content
+ * @param {string} filePath - File path
+ * @return {'wdio'|'cypress'|'unknown'}
+ */
+function detectFramework( content, filePath ) {
+	const lowerPath = filePath.toLowerCase();
+	const isCypress = /(?:cy\.|Cypress\.)/.test( content ) || lowerPath.includes( 'cypress' );
+	const isWdio = /(?:browser\.|wdio-mediawiki|@wdio\/|webdriverio|import.*from\s+['"]wdio)/.test( content ) ||
+		lowerPath.includes( 'selenium' ) || lowerPath.includes( 'wdio' );
+
+	if ( isCypress ) {
+		return 'cypress';
+	}
+	if ( isWdio ) {
+		return 'wdio';
+	}
+	return 'unknown';
+}
+
+// ---------------------------------------------------------------------------
 // Test map builders
 // ---------------------------------------------------------------------------
 
@@ -585,6 +611,7 @@ async function buildTestMapRemote( provider, specFiles, filter ) {
 	const tests = {};
 	let totalTests = 0;
 	let totalSuites = 0;
+	const frameworksFound = new Set();
 
 	for ( const specFile of specFiles ) {
 		let content;
@@ -599,6 +626,7 @@ async function buildTestMapRemote( provider, specFiles, filter ) {
 			tests[ specFile ] = entry.suites;
 			totalTests += entry.testCount;
 			totalSuites += entry.suiteCount;
+			frameworksFound.add( detectFramework( content, specFile ) );
 		}
 	}
 
@@ -606,7 +634,8 @@ async function buildTestMapRemote( provider, specFiles, filter ) {
 		tests,
 		totalTests,
 		totalSuites,
-		totalFiles: Object.keys( tests ).length
+		totalFiles: Object.keys( tests ).length,
+		frameworks: Array.from( frameworksFound ).sort()
 	};
 }
 
@@ -673,6 +702,7 @@ module.exports = {
 	isSpecFile,
 	parseContent,
 	flattenSuites,
+	detectFramework,
 	buildTestMapLocal,
 	buildTestMapRemote,
 	repoSlug,

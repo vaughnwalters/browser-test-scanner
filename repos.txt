@@ -1,7 +1,47 @@
-# MediaWiki extensions to scan for browser tests
+# Repos to scan for browser tests (from T363704)
 # One URL per line. Lines starting with # are comments.
 
 https://gerrit.wikimedia.org/r/mediawiki/core
+https://gerrit.wikimedia.org/r/mediawiki/extensions/AbuseFilter
+https://gerrit.wikimedia.org/r/mediawiki/extensions/AchievementBadges
+https://gerrit.wikimedia.org/r/mediawiki/extensions/AdvancedSearch
 https://gerrit.wikimedia.org/r/mediawiki/extensions/CampaignEvents
+https://gerrit.wikimedia.org/r/mediawiki/extensions/Cargo
+https://gerrit.wikimedia.org/r/mediawiki/extensions/CentralNotice
+https://gerrit.wikimedia.org/r/mediawiki/extensions/CirrusSearch
+https://gerrit.wikimedia.org/r/mediawiki/extensions/Cite
+https://gerrit.wikimedia.org/r/mediawiki/extensions/CommunityConfiguration
+https://gerrit.wikimedia.org/r/mediawiki/extensions/CodeMirror
+https://gerrit.wikimedia.org/r/mediawiki/extensions/CommunityRequests
+https://gerrit.wikimedia.org/r/mediawiki/extensions/ContactPage
+https://gerrit.wikimedia.org/r/mediawiki/extensions/ContentTranslation
+https://gerrit.wikimedia.org/r/mediawiki/extensions/Echo
+https://gerrit.wikimedia.org/r/mediawiki/extensions/ElectronPdfService
+https://gerrit.wikimedia.org/r/mediawiki/extensions/EntitySchema
+https://gerrit.wikimedia.org/r/mediawiki/extensions/examples
+https://gerrit.wikimedia.org/r/mediawiki/extensions/FacetedCategory
+https://gerrit.wikimedia.org/r/mediawiki/extensions/GlobalWatchlist
 https://gerrit.wikimedia.org/r/mediawiki/extensions/GrowthExperiments
+https://gerrit.wikimedia.org/r/mediawiki/extensions/GuidedTour
+https://gerrit.wikimedia.org/r/mediawiki/extensions/Math
+https://gerrit.wikimedia.org/r/mediawiki/extensions/Newsletter
+https://gerrit.wikimedia.org/r/mediawiki/extensions/OpenIDConnect
+https://gerrit.wikimedia.org/r/mediawiki/extensions/PageTriage
+https://gerrit.wikimedia.org/r/mediawiki/extensions/ParserMigration
+https://gerrit.wikimedia.org/r/mediawiki/extensions/Popups
+https://gerrit.wikimedia.org/r/mediawiki/extensions/ProofreadPage
+https://gerrit.wikimedia.org/r/mediawiki/extensions/RelatedArticles
+https://gerrit.wikimedia.org/r/mediawiki/extensions/ReportIncident
+https://gerrit.wikimedia.org/r/mediawiki/extensions/RevisionSlider
+https://gerrit.wikimedia.org/r/mediawiki/extensions/Sanctions
+https://gerrit.wikimedia.org/r/mediawiki/extensions/Score
+https://gerrit.wikimedia.org/r/mediawiki/extensions/TemplateData
+https://gerrit.wikimedia.org/r/mediawiki/extensions/TemplateWizard
+https://gerrit.wikimedia.org/r/mediawiki/extensions/TwoColConflict
+https://gerrit.wikimedia.org/r/mediawiki/extensions/VisualEditor
+https://gerrit.wikimedia.org/r/mediawiki/extensions/Wikibase
+https://gerrit.wikimedia.org/r/mediawiki/extensions/WikibaseLexeme
+https://gerrit.wikimedia.org/r/mediawiki/extensions/WikibaseQualityConstraints
 https://gerrit.wikimedia.org/r/mediawiki/extensions/WikiLambda
+https://gerrit.wikimedia.org/r/mediawiki/skins/MinervaNeue
+https://gerrit.wikimedia.org/r/wikibase/termbox

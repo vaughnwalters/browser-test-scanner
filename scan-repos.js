@@ -116,7 +116,7 @@ async function main() {
 			continue;
 		}
 
-		const { tests, totalTests, totalSuites, totalFiles } = await buildTestMapRemote( provider, specFiles, isBrowserTest );
+		const { tests, totalTests, totalSuites, totalFiles, frameworks } = await buildTestMapRemote( provider, specFiles, isBrowserTest );
 
 		const slug = repoSlug( repoUrl );
 		const outFile = path.resolve( outputDir, `${ slug }_tests.json` );
@@ -126,6 +126,7 @@ async function main() {
 			totalFiles,
 			totalSuites,
 			totalTests,
+			frameworks,
 			tests
 		};
 		fs.writeFileSync( outFile, JSON.stringify( output, null, 2 ) + '\n' );
@@ -135,7 +136,8 @@ async function main() {
 			status: 'found',
 			totalFiles,
 			totalSuites,
-			totalTests
+			totalTests,
+			frameworks
 		} );
 
 		console.log( `  FOUND ${ repoUrl } (${ totalFiles } files, ${ totalTests } tests)` );
