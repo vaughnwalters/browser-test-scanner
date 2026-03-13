@@ -7,7 +7,7 @@ All results are written to the `results/` directory.
 ## Usage
 
 ```bash
-node scan-repos.js repos.txt
+node scan.js
 ```
 
 This scans every repo listed in `repos.txt` and writes per-repo JSON files plus a `summary.json`:
@@ -70,8 +70,7 @@ Results are grouped by spec file. Each file maps its `describe()` blocks to arra
 ## Project structure
 
 ```
-scan.js            # Scan a single repo
-scan-repos.js      # Scan multiple repos from a list
+scan.js            # Scan all repos (default) or a single repo
 parser.js          # Shared parsing, API providers, and utilities
 repos.txt          # Default repo list
 ```
