@@ -15,6 +15,7 @@ const path = require( 'path' );
 const {
 	parseArgs,
 	createRemoteProvider,
+	defaultOutputName,
 	findFiles,
 	findLocalSpecs,
 	findRemoteSpecs,
@@ -48,7 +49,10 @@ function isCypressTest( content, filePath ) {
 }
 
 async function main() {
-	const { repoUrl, outputFile } = parseArgs( 'cypress-tests.json' );
+	let { repoUrl, outputFile } = parseArgs( `results/${ defaultOutputName( '...', 'cypress' ) }` );
+	if ( !process.argv.includes( '--output' ) && !process.argv.includes( '-o' ) ) {
+		outputFile = `results/${ defaultOutputName( repoUrl, 'cypress' ) }`;
+	}
 	const provider = createRemoteProvider( repoUrl );
 
 	let tests, totalTests, totalSuites, totalFiles;

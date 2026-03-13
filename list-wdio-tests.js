@@ -15,6 +15,7 @@ const path = require( 'path' );
 const {
 	parseArgs,
 	createRemoteProvider,
+	defaultOutputName,
 	findFiles,
 	findLocalSpecs,
 	findRemoteSpecs,
@@ -58,7 +59,10 @@ function isWdioTest( content, filePath ) {
 }
 
 async function main() {
-	const { repoUrl, outputFile } = parseArgs( 'wdio-tests.json' );
+	let { repoUrl, outputFile } = parseArgs( `results/${ defaultOutputName( '...', 'wdio' ) }` );
+	if ( !process.argv.includes( '--output' ) && !process.argv.includes( '-o' ) ) {
+		outputFile = `results/${ defaultOutputName( repoUrl, 'wdio' ) }`;
+	}
 	const provider = createRemoteProvider( repoUrl );
 
 	let tests, totalTests, totalSuites, totalFiles;

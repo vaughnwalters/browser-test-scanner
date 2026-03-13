@@ -23,8 +23,7 @@ const {
 	createRemoteProvider,
 	findRemoteSpecs,
 	buildTestMapRemote,
-	parseContent,
-	flattenSuites
+	repoSlug
 } = require( './parser' );
 
 const WDIO_DIRS = [
@@ -119,21 +118,6 @@ function readRepoList( filePath ) {
 		.split( '\n' )
 		.map( ( line ) => line.trim() )
 		.filter( ( line ) => line && !line.startsWith( '#' ) );
-}
-
-/**
- * Derive a short name from a repo URL for use in filenames.
- *
- * @param {string} url - Repository URL
- * @return {string} Short name
- */
-function repoSlug( url ) {
-	return url
-		.replace( /^https?:\/\//, '' )
-		.replace( /\.git$/, '' )
-		.replace( /[^a-zA-Z0-9-]/g, '_' )
-		.replace( /_+/g, '_' )
-		.replace( /^_|_$/g, '' );
 }
 
 /**

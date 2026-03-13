@@ -611,6 +611,36 @@ async function buildTestMapRemote( provider, specFiles, filter ) {
 }
 
 // ---------------------------------------------------------------------------
+// Naming
+// ---------------------------------------------------------------------------
+
+/**
+ * Derive a short name from a repo URL for use in filenames.
+ *
+ * @param {string} url - Repository URL or local path
+ * @return {string} Short name
+ */
+function repoSlug( url ) {
+	return url
+		.replace( /^https?:\/\//, '' )
+		.replace( /\.git$/, '' )
+		.replace( /[^a-zA-Z0-9-]/g, '_' )
+		.replace( /_+/g, '_' )
+		.replace( /^_|_$/g, '' );
+}
+
+/**
+ * Build a default output filename from the repo URL and a suffix.
+ *
+ * @param {string} repoUrl - Repository URL or local path
+ * @param {string} suffix - e.g. 'wdio' or 'cypress'
+ * @return {string} Filename like 'gerrit_wikimedia_org_r_mediawiki_core_wdio.json'
+ */
+function defaultOutputName( repoUrl, suffix ) {
+	return `${ repoSlug( repoUrl ) }_${ suffix }.json`;
+}
+
+// ---------------------------------------------------------------------------
 // Output
 // ---------------------------------------------------------------------------
 
@@ -622,6 +652,7 @@ async function buildTestMapRemote( provider, specFiles, filter ) {
  */
 function writeOutput( outputFile, output ) {
 	const outputPath = path.resolve( outputFile );
+	fs.mkdirSync( path.dirname( outputPath ), { recursive: true } );
 	fs.writeFileSync( outputPath, JSON.stringify( output, null, 2 ) + '\n' );
 	console.log( `\nResults written to ${ outputPath }` );
 	const filePart = output.totalFiles ? `${ output.totalFiles } file(s), ` : '';
@@ -644,5 +675,7 @@ module.exports = {
 	flattenSuites,
 	buildTestMapLocal,
 	buildTestMapRemote,
+	repoSlug,
+	defaultOutputName,
 	writeOutput
 };
