@@ -51,7 +51,7 @@ async function main() {
 	const { repoUrl, outputFile } = parseArgs( 'cypress-tests.json' );
 	const provider = createRemoteProvider( repoUrl );
 
-	let tests, totalTests, totalSuites;
+	let tests, totalTests, totalSuites, totalFiles;
 
 	if ( provider ) {
 		console.log( `Scanning ${ repoUrl } via ${ provider.type } API...` );
@@ -59,7 +59,7 @@ async function main() {
 		const specFiles = await findRemoteSpecs( provider, CYPRESS_DIRS );
 		console.log( `Found ${ specFiles.length } potential test file(s)` );
 
-		( { tests, totalTests, totalSuites } = await buildTestMapRemote( provider, specFiles, isCypressTest ) );
+		( { tests, totalTests, totalSuites, totalFiles } = await buildTestMapRemote( provider, specFiles, isCypressTest ) );
 	} else {
 		const repoPath = path.resolve( repoUrl );
 		if ( !fs.existsSync( repoPath ) ) {
@@ -73,12 +73,13 @@ async function main() {
 		const specFiles = findLocalSpecs( repoPath, CYPRESS_DIRS );
 		console.log( `Found ${ specFiles.length } potential test file(s)` );
 
-		( { tests, totalTests, totalSuites } = buildTestMapLocal( specFiles, isCypressTest ) );
+		( { tests, totalTests, totalSuites, totalFiles } = buildTestMapLocal( specFiles, isCypressTest, repoPath ) );
 	}
 
 	writeOutput( outputFile, {
 		repository: repoUrl,
 		generatedAt: new Date().toISOString(),
+		totalFiles,
 		totalSuites,
 		totalTests,
 		tests

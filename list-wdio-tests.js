@@ -61,7 +61,7 @@ async function main() {
 	const { repoUrl, outputFile } = parseArgs( 'wdio-tests.json' );
 	const provider = createRemoteProvider( repoUrl );
 
-	let tests, totalTests, totalSuites;
+	let tests, totalTests, totalSuites, totalFiles;
 
 	if ( provider ) {
 		console.log( `Scanning ${ repoUrl } via ${ provider.type } API...` );
@@ -69,7 +69,7 @@ async function main() {
 		const specFiles = await findRemoteSpecs( provider, WDIO_DIRS );
 		console.log( `Found ${ specFiles.length } potential test file(s)` );
 
-		( { tests, totalTests, totalSuites } = await buildTestMapRemote( provider, specFiles, isWdioTest ) );
+		( { tests, totalTests, totalSuites, totalFiles } = await buildTestMapRemote( provider, specFiles, isWdioTest ) );
 	} else {
 		const repoPath = path.resolve( repoUrl );
 		if ( !fs.existsSync( repoPath ) ) {
@@ -83,12 +83,13 @@ async function main() {
 		const specFiles = findLocalSpecs( repoPath, WDIO_DIRS );
 		console.log( `Found ${ specFiles.length } potential test file(s)` );
 
-		( { tests, totalTests, totalSuites } = buildTestMapLocal( specFiles, isWdioTest ) );
+		( { tests, totalTests, totalSuites, totalFiles } = buildTestMapLocal( specFiles, isWdioTest, repoPath ) );
 	}
 
 	writeOutput( outputFile, {
 		repository: repoUrl,
 		generatedAt: new Date().toISOString(),
+		totalFiles,
 		totalSuites,
 		totalTests,
 		tests
