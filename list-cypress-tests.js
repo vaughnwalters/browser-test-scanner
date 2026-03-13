@@ -21,7 +21,7 @@ const {
 	buildTestMapLocal,
 	buildTestMapRemote,
 	writeOutput
-} = require( './lib/parser' );
+} = require( './parser' );
 
 const CYPRESS_DIRS = [
 	'cypress/e2e',

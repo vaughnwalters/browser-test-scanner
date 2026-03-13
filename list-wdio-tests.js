@@ -21,7 +21,7 @@ const {
 	buildTestMapLocal,
 	buildTestMapRemote,
 	writeOutput
-} = require( './lib/parser' );
+} = require( './parser' );
 
 const WDIO_DIRS = [
 	'tests/selenium/specs',

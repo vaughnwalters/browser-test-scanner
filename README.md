@@ -2,8 +2,6 @@
 
 Scans git repositories for WebdriverIO and Cypress tests and outputs JSON files listing all test suites and test cases, grouped by spec file.
 
-Remote repos are scanned via API (Gitiles for Gerrit, GitHub API for GitHub) — no cloning required.
-
 ## Scripts
 
 | Script | Purpose | Default output |
@@ -115,7 +113,7 @@ The `summary.json` includes counts per repo and totals:
 ## Project structure
 
 ```
-lib/parser.js          # Shared parsing, API providers, and utility functions
+parser.js              # Shared parsing, API providers, and utility functions
 list-wdio-tests.js     # WebdriverIO test scanner
 list-cypress-tests.js  # Cypress test scanner
 scan-repos.js          # Batch scanner with auto-detection

@@ -1,0 +1,62 @@
+{
+  "repository": "https://gerrit.wikimedia.org/r/mediawiki/extensions/GrowthExperiments",
+  "generatedAt": "2026-03-13T20:41:33.948Z",
+  "totalFiles": 9,
+  "totalSuites": 10,
+  "totalTests": 15,
+  "tests": {
+    "cypress/e2e/AddALink.cy.ts": {
+      "Add a Link": [
+        "link inspector can be used to accept/reject links and save an article."
+      ]
+    },
+    "cypress/e2e/AddImage.cy.ts": {
+      "Add Image Structured Task": [
+        "desktop: user can view image info and image details",
+        "mobile: user can close the image suggestion UI"
+      ]
+    },
+    "cypress/e2e/CommunityConfiguration.cy.ts": {
+      "Special:EditGrowthConfig": [
+        "redirects to Special:CommunityConfiguration"
+      ]
+    },
+    "cypress/e2e/Homepage.cy.ts": {
+      "Special:Homepage": [
+        "Shows a suggested edits card and allows navigation forwards and backwards through queue"
+      ]
+    },
+    "cypress/e2e/Impact/Impact.cy.ts": {
+      "Impact": [
+        "shows the user\\"
+      ]
+    },
+    "cypress/e2e/MentorDashboard.cy.ts": {
+      "Special:MentorDashboard": [
+        "allows enrolling as a mentor"
+      ]
+    },
+    "cypress/e2e/ReviseTone.cy.ts": {
+      "Revise Tone > On desktop": [
+        "Shows the Revise Tone Edit Check",
+        "Closes the Editor when declining Edits and suggests a new task",
+        "Shows the Revise Tone Edit Check and tags edits"
+      ],
+      "Revise Tone > On mobile": [
+        "Shows the Revise Tone Edit Check",
+        "Closes the Editor when declining Edits and suggests a new task",
+        "Shows the Revise Tone Edit Check and tags edits"
+      ]
+    },
+    "cypress/e2e/TemplateBasedTask.cy.ts": {
+      "Template-based tasks": [
+        "saves change tags for unstructured task edits made via VisualEditor"
+      ]
+    },
+    "cypress/e2e/ViewGrowthExperimentsEvents.cy.ts": {
+      "Special:Log": [
+        "Shows the GrowthExperiments event Mentor assignment changes"
+      ]
+    }
+  }
+}

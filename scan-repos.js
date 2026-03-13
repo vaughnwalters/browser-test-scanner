@@ -25,7 +25,7 @@ const {
 	buildTestMapRemote,
 	parseContent,
 	flattenSuites
-} = require( './lib/parser' );
+} = require( './parser' );
 
 const WDIO_DIRS = [
 	'tests/selenium/specs',
