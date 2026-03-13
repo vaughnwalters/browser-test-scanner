@@ -6,11 +6,13 @@ All results are written to the `results/` directory.
 
 ## Usage
 
+By default, `scan.js` reads `repos.txt` and scans every repo in it:
+
 ```bash
 node scan.js
 ```
 
-This scans every repo listed in `repos.txt` and writes per-repo JSON files plus a `summary.json`:
+Each repo gets its own JSON file in `results/`, along with a `summary.json`:
 
 ```
 results/
