@@ -1,7 +1,0 @@
-# MediaWiki extensions to scan for browser tests
-# One URL per line. Lines starting with # are comments.
-
-https://gerrit.wikimedia.org/r/mediawiki/core
-https://gerrit.wikimedia.org/r/mediawiki/extensions/CampaignEvents
-https://gerrit.wikimedia.org/r/mediawiki/extensions/GrowthExperiments
-https://gerrit.wikimedia.org/r/mediawiki/extensions/WikiLambda
