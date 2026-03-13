@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 
 /**
- * Scans a git repository for Cypress tests and outputs a JSON file
- * listing all test suites and individual test cases.
+ * Scans a git repository for all browser tests (WebdriverIO, Cypress, etc.)
+ * and outputs a JSON file listing all test suites and test cases, grouped by file.
  *
  * Usage:
- *   node list-cypress-tests.js <repo-url-or-local-path> [--output <file>]
+ *   node scan.js <repo-url-or-path> [--output <file>]
  */
 
 'use strict';
@@ -24,7 +24,24 @@ const {
 	writeOutput
 } = require( './parser' );
 
-const CYPRESS_DIRS = [
+const TEST_DIRS = [
+	'tests/selenium/specs',
+	'tests/selenium',
+	'test/selenium/specs',
+	'test/selenium',
+	'tests/e2e/specs',
+	'tests/e2e',
+	'test/e2e/specs',
+	'test/e2e',
+	'tests/wdio/specs',
+	'tests/wdio',
+	'test/wdio/specs',
+	'test/wdio',
+	'tests/browser',
+	'test/browser',
+	'selenium',
+	'e2e',
+	'specs',
 	'cypress/e2e',
 	'cypress/integration',
 	'cypress/specs',
@@ -37,22 +54,26 @@ const CYPRESS_DIRS = [
 ];
 
 /**
- * Check if file content looks like a Cypress test.
+ * Check if file content looks like a browser test.
  *
  * @param {string} content - File content
  * @param {string} filePath - File path
  * @return {boolean}
  */
-function isCypressTest( content, filePath ) {
-	return /(?:cy\.|Cypress\.|cypress)/i.test( content ) ||
+function isBrowserTest( content, filePath ) {
+	return /(?:browser\.|wdio-mediawiki|@wdio\/|webdriverio|import.*from\s+['"]wdio|cy\.|Cypress\.)/i.test( content ) ||
+		filePath.includes( 'selenium' ) ||
+		filePath.includes( 'wdio' ) ||
+		filePath.includes( 'e2e' ) ||
 		filePath.includes( 'cypress' );
 }
 
 async function main() {
-	let { repoUrl, outputFile } = parseArgs( `results/${ defaultOutputName( '...', 'cypress' ) }` );
+	let { repoUrl, outputFile } = parseArgs( `results/${ defaultOutputName( '...', 'tests' ) }` );
 	if ( !process.argv.includes( '--output' ) && !process.argv.includes( '-o' ) ) {
-		outputFile = `results/${ defaultOutputName( repoUrl, 'cypress' ) }`;
+		outputFile = `results/${ defaultOutputName( repoUrl, 'tests' ) }`;
 	}
+
 	const provider = createRemoteProvider( repoUrl );
 
 	let tests, totalTests, totalSuites, totalFiles;
@@ -60,10 +81,10 @@ async function main() {
 	if ( provider ) {
 		console.log( `Scanning ${ repoUrl } via ${ provider.type } API...` );
 
-		const specFiles = await findRemoteSpecs( provider, CYPRESS_DIRS );
+		const specFiles = await findRemoteSpecs( provider, TEST_DIRS );
 		console.log( `Found ${ specFiles.length } potential test file(s)` );
 
-		( { tests, totalTests, totalSuites, totalFiles } = await buildTestMapRemote( provider, specFiles, isCypressTest ) );
+		( { tests, totalTests, totalSuites, totalFiles } = await buildTestMapRemote( provider, specFiles, isBrowserTest ) );
 	} else {
 		const repoPath = path.resolve( repoUrl );
 		if ( !fs.existsSync( repoPath ) ) {
@@ -71,13 +92,10 @@ async function main() {
 			process.exit( 1 );
 		}
 
-		const configs = findFiles( repoPath, /^cypress\.(config\.(js|ts|mjs|cjs)|json)$/ );
-		console.log( `Found ${ configs.length } Cypress config(s)` );
-
-		const specFiles = findLocalSpecs( repoPath, CYPRESS_DIRS );
+		const specFiles = findLocalSpecs( repoPath, TEST_DIRS );
 		console.log( `Found ${ specFiles.length } potential test file(s)` );
 
-		( { tests, totalTests, totalSuites, totalFiles } = buildTestMapLocal( specFiles, isCypressTest, repoPath ) );
+		( { tests, totalTests, totalSuites, totalFiles } = buildTestMapLocal( specFiles, isBrowserTest, repoPath ) );
 	}
 
 	writeOutput( outputFile, {

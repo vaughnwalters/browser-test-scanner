@@ -1,37 +1,26 @@
 # Browser Test Scanner
 
-Scans git repositories for WebdriverIO and Cypress tests and outputs JSON files listing all test suites and test cases, grouped by spec file.
+Scans git repositories for browser tests (WebdriverIO, Cypress) and outputs JSON files listing all test suites and test cases, grouped by spec file.
 
-All results are written to the `results/` directory with descriptive filenames.
-
-## Scripts
-
-| Script | Purpose |
-|---|---|
-| `list-wdio-tests.js` | Scan a single repo for WebdriverIO tests |
-| `list-cypress-tests.js` | Scan a single repo for Cypress tests |
-| `scan-repos.js` | Scan multiple repos, auto-detect framework |
+All results are written to the `results/` directory.
 
 ## Single repo
 
 ```bash
-node list-wdio-tests.js <repo-url-or-path>
-node list-cypress-tests.js <repo-url-or-path>
+node scan.js <repo-url-or-path>
 ```
 
 ### Examples
 
 ```bash
-# WebdriverIO tests from a remote Gerrit repo
-node list-wdio-tests.js https://gerrit.wikimedia.org/r/mediawiki/extensions/CampaignEvents
-# -> results/gerrit_wikimedia_org_r_mediawiki_extensions_CampaignEvents_wdio.json
+node scan.js https://gerrit.wikimedia.org/r/mediawiki/extensions/CampaignEvents
+# -> results/gerrit_wikimedia_org_r_mediawiki_extensions_CampaignEvents_tests.json
 
-# Cypress tests from a remote Gerrit repo
-node list-cypress-tests.js https://gerrit.wikimedia.org/r/mediawiki/extensions/GrowthExperiments
-# -> results/gerrit_wikimedia_org_r_mediawiki_extensions_GrowthExperiments_cypress.json
+node scan.js ./my-project
+# -> results/my-project_tests.json
 
 # Custom output path
-node list-wdio-tests.js ./my-project --output my-tests.json
+node scan.js https://gerrit.wikimedia.org/r/mediawiki/core --output custom.json
 ```
 
 ### Output
@@ -41,7 +30,7 @@ Results are grouped by spec file. Each file maps its `describe()` blocks to arra
 ```json
 {
   "repository": "https://gerrit.wikimedia.org/r/mediawiki/extensions/CampaignEvents",
-  "generatedAt": "2026-03-13T20:33:40.255Z",
+  "generatedAt": "2026-03-13T21:43:09.521Z",
   "totalFiles": 4,
   "totalSuites": 4,
   "totalTests": 12,
@@ -49,9 +38,7 @@ Results are grouped by spec file. Each file maps its `describe()` blocks to arra
     "tests/selenium/specs/editEventRegistration.js": {
       "Edit Event Registration": [
         "can allow organizer to update event page and dates",
-        "can allow organizer to change the event to be in person",
-        "can allow organizer to change the event to be online and in-person",
-        "can allow organizer to add an additional organizer"
+        "can allow organizer to change the event to be in person"
       ]
     },
     "tests/selenium/specs/enableEventRegistration.js": {
@@ -67,14 +54,13 @@ Results are grouped by spec file. Each file maps its `describe()` blocks to arra
 
 ## Batch scanning
 
-Scan multiple repos at once. Create a text file with one repo URL per line (lines starting with `#` are comments):
+Create a text file with one repo URL per line (lines starting with `#` are comments):
 
 ```
 # repos.txt
 https://gerrit.wikimedia.org/r/mediawiki/core
 https://gerrit.wikimedia.org/r/mediawiki/extensions/CampaignEvents
 https://gerrit.wikimedia.org/r/mediawiki/extensions/GrowthExperiments
-https://gerrit.wikimedia.org/r/mediawiki/extensions/WikiLambda
 ```
 
 Then run:
@@ -83,44 +69,23 @@ Then run:
 node scan-repos.js repos.txt
 ```
 
-This auto-detects whether each repo uses WebdriverIO, Cypress, both, or neither, then runs the appropriate scanner.
+This scans each repo and writes a `summary.json` alongside per-repo results:
 
 ```
 results/
-  summary.json                                          # Overview of all repos
-  gerrit_wikimedia_org_r_mediawiki_core_wdio.json       # Per-repo test listings
-  gerrit_wikimedia_org_r_mediawiki_extensions_GrowthExperiments_cypress.json
-  ...
-```
-
-The `summary.json` includes counts per repo and totals:
-
-```json
-{
-  "generatedAt": "2026-03-13T20:26:12.576Z",
-  "totalRepos": 4,
-  "withWdio": 3,
-  "withCypress": 1,
-  "withBoth": 0,
-  "withNone": 0,
-  "repos": [
-    {
-      "repository": "https://gerrit.wikimedia.org/r/mediawiki/core",
-      "wdio": { "totalFiles": 10, "totalSuites": 10, "totalTests": 23 },
-      "framework": "wdio"
-    }
-  ]
-}
+  summary.json
+  gerrit_wikimedia_org_r_mediawiki_core_tests.json
+  gerrit_wikimedia_org_r_mediawiki_extensions_CampaignEvents_tests.json
+  gerrit_wikimedia_org_r_mediawiki_extensions_GrowthExperiments_tests.json
 ```
 
 ## Project structure
 
 ```
-parser.js              # Shared parsing, API providers, and utility functions
-list-wdio-tests.js     # WebdriverIO test scanner
-list-cypress-tests.js  # Cypress test scanner
-scan-repos.js          # Batch scanner with auto-detection
-repos.example.txt      # Example repo list
+scan.js            # Scan a single repo
+scan-repos.js      # Scan multiple repos from a list
+parser.js          # Shared parsing, API providers, and utilities
+repos.example.txt  # Example repo list
 ```
 
 ## Requirements

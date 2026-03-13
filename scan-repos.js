@@ -2,17 +2,12 @@
 
 /**
  * Scans multiple repositories for browser tests (WebdriverIO and/or Cypress).
- * Detects which framework each repo uses, then runs the appropriate scanner.
  *
  * Usage:
- *   node scan-repos.js <repos-file> [--output-dir <dir>]
+ *   node scan-repos.js <repos-file>
  *
  * The repos file should contain one repository URL per line.
  * Lines starting with # are treated as comments.
- *
- * Examples:
- *   node scan-repos.js repos.txt
- *   node scan-repos.js repos.txt --output-dir results/
  */
 
 'use strict';
@@ -26,7 +21,7 @@ const {
 	repoSlug
 } = require( './parser' );
 
-const WDIO_DIRS = [
+const TEST_DIRS = [
 	'tests/selenium/specs',
 	'tests/selenium',
 	'test/selenium/specs',
@@ -43,10 +38,7 @@ const WDIO_DIRS = [
 	'test/browser',
 	'selenium',
 	'e2e',
-	'specs'
-];
-
-const CYPRESS_DIRS = [
+	'specs',
 	'cypress/e2e',
 	'cypress/integration',
 	'cypress/specs',
@@ -58,15 +50,11 @@ const CYPRESS_DIRS = [
 	'test/cypress/integration'
 ];
 
-function isWdioTest( content, filePath ) {
-	return /(?:browser\.|wdio-mediawiki|@wdio\/|webdriverio|import.*from\s+['"]wdio)/i.test( content ) ||
+function isBrowserTest( content, filePath ) {
+	return /(?:browser\.|wdio-mediawiki|@wdio\/|webdriverio|import.*from\s+['"]wdio|cy\.|Cypress\.)/i.test( content ) ||
 		filePath.includes( 'selenium' ) ||
 		filePath.includes( 'wdio' ) ||
-		filePath.includes( 'e2e' );
-}
-
-function isCypressTest( content, filePath ) {
-	return /(?:cy\.|Cypress\.|cypress)/i.test( content ) ||
+		filePath.includes( 'e2e' ) ||
 		filePath.includes( 'cypress' );
 }
 
@@ -74,44 +62,18 @@ function parseArgs() {
 	const args = process.argv.slice( 2 );
 
 	if ( args.length === 0 || args.includes( '--help' ) || args.includes( '-h' ) ) {
-		console.log( `Usage: node scan-repos.js <repos-file> [--output-dir <dir>]
+		console.log( `Usage: node scan-repos.js <repos-file>
 
 Arguments:
-  repos-file         Text file with one repo URL per line
-  --output-dir, -d   Output directory for JSON files (default: results/)
+  repos-file   Text file with one repo URL per line
 
-The repos file should contain one URL per line. Lines starting with # are comments.` );
+Lines starting with # are comments.` );
 		process.exit( args.length === 0 ? 1 : 0 );
 	}
 
-	let reposFile = null;
-	let outputDir = 'results';
-
-	for ( let i = 0; i < args.length; i++ ) {
-		if ( args[ i ] === '--output-dir' || args[ i ] === '-d' ) {
-			i++;
-			if ( i < args.length ) {
-				outputDir = args[ i ];
-			}
-		} else if ( !reposFile ) {
-			reposFile = args[ i ];
-		}
-	}
-
-	if ( !reposFile ) {
-		console.error( 'Error: repos file is required' );
-		process.exit( 1 );
-	}
-
-	return { reposFile, outputDir };
+	return { reposFile: args[ 0 ] };
 }
 
-/**
- * Read repo URLs from a file.
- *
- * @param {string} filePath - Path to the repos file
- * @return {string[]} Array of repo URLs
- */
 function readRepoList( filePath ) {
 	const content = fs.readFileSync( path.resolve( filePath ), 'utf-8' );
 	return content
@@ -120,30 +82,10 @@ function readRepoList( filePath ) {
 		.filter( ( line ) => line && !line.startsWith( '#' ) );
 }
 
-/**
- * Detect which test frameworks a repo uses by checking for spec files
- * in the known directories.
- *
- * @param {Object} provider - Remote provider
- * @return {Promise<{ hasWdio: boolean, hasCypress: boolean, wdioFiles: string[], cypressFiles: string[] }>}
- */
-async function detectFrameworks( provider ) {
-	const [ wdioFiles, cypressFiles ] = await Promise.all( [
-		findRemoteSpecs( provider, WDIO_DIRS ),
-		findRemoteSpecs( provider, CYPRESS_DIRS )
-	] );
-
-	return {
-		hasWdio: wdioFiles.length > 0,
-		hasCypress: cypressFiles.length > 0,
-		wdioFiles,
-		cypressFiles
-	};
-}
-
 async function main() {
-	const { reposFile, outputDir } = parseArgs();
+	const { reposFile } = parseArgs();
 	const repos = readRepoList( reposFile );
+	const outputDir = 'results';
 
 	console.log( `Scanning ${ repos.length } repo(s)...\n` );
 
@@ -155,85 +97,63 @@ async function main() {
 		const provider = createRemoteProvider( repoUrl );
 		if ( !provider ) {
 			console.log( `  SKIP  ${ repoUrl } (unsupported host)` );
-			summary.push( { repository: repoUrl, framework: 'unsupported' } );
+			summary.push( { repository: repoUrl, status: 'unsupported' } );
 			continue;
 		}
 
-		let detection;
+		let specFiles;
 		try {
-			detection = await detectFrameworks( provider );
+			specFiles = await findRemoteSpecs( provider, TEST_DIRS );
 		} catch ( e ) {
 			console.log( `  ERROR ${ repoUrl } (${ e.message })` );
-			summary.push( { repository: repoUrl, framework: 'error', error: e.message } );
+			summary.push( { repository: repoUrl, status: 'error', error: e.message } );
 			continue;
 		}
 
-		const { hasWdio, hasCypress, wdioFiles, cypressFiles } = detection;
-
-		if ( !hasWdio && !hasCypress ) {
+		if ( specFiles.length === 0 ) {
 			console.log( `  NONE  ${ repoUrl }` );
-			summary.push( { repository: repoUrl, framework: 'none' } );
+			summary.push( { repository: repoUrl, status: 'none' } );
 			continue;
 		}
+
+		const { tests, totalTests, totalSuites, totalFiles } = await buildTestMapRemote( provider, specFiles, isBrowserTest );
 
 		const slug = repoSlug( repoUrl );
-		const frameworks = [];
-		const repoEntry = { repository: repoUrl };
+		const outFile = path.resolve( outputDir, `${ slug }_tests.json` );
+		const output = {
+			repository: repoUrl,
+			generatedAt: new Date().toISOString(),
+			totalFiles,
+			totalSuites,
+			totalTests,
+			tests
+		};
+		fs.writeFileSync( outFile, JSON.stringify( output, null, 2 ) + '\n' );
 
-		if ( hasWdio ) {
-			frameworks.push( 'wdio' );
-			const { tests, totalTests, totalSuites, totalFiles } = await buildTestMapRemote( provider, wdioFiles, isWdioTest );
-			const outFile = path.resolve( outputDir, `${ slug }_wdio.json` );
-			const output = {
-				repository: repoUrl,
-				generatedAt: new Date().toISOString(),
-				totalFiles,
-				totalSuites,
-				totalTests,
-				tests
-			};
-			fs.writeFileSync( outFile, JSON.stringify( output, null, 2 ) + '\n' );
-			repoEntry.wdio = { totalFiles, totalSuites, totalTests };
-		}
+		summary.push( {
+			repository: repoUrl,
+			status: 'found',
+			totalFiles,
+			totalSuites,
+			totalTests
+		} );
 
-		if ( hasCypress ) {
-			frameworks.push( 'cypress' );
-			const { tests, totalTests, totalSuites, totalFiles } = await buildTestMapRemote( provider, cypressFiles, isCypressTest );
-			const outFile = path.resolve( outputDir, `${ slug }_cypress.json` );
-			const output = {
-				repository: repoUrl,
-				generatedAt: new Date().toISOString(),
-				totalFiles,
-				totalSuites,
-				totalTests,
-				tests
-			};
-			fs.writeFileSync( outFile, JSON.stringify( output, null, 2 ) + '\n' );
-			repoEntry.cypress = { totalFiles, totalSuites, totalTests };
-		}
-
-		repoEntry.framework = frameworks.join( '+' );
-		summary.push( repoEntry );
-
-		const label = frameworks.join( ' + ' ).toUpperCase();
-		console.log( `  ${ label.padEnd( 7 ) } ${ repoUrl }` );
+		console.log( `  FOUND ${ repoUrl } (${ totalFiles } files, ${ totalTests } tests)` );
 	}
 
-	// Write summary
 	const summaryFile = path.resolve( outputDir, 'summary.json' );
+	const found = summary.filter( ( s ) => s.status === 'found' );
 	const summaryOutput = {
 		generatedAt: new Date().toISOString(),
 		totalRepos: repos.length,
-		withWdio: summary.filter( ( s ) => s.framework.includes( 'wdio' ) ).length,
-		withCypress: summary.filter( ( s ) => s.framework.includes( 'cypress' ) ).length,
-		withBoth: summary.filter( ( s ) => s.framework === 'wdio+cypress' ).length,
-		withNone: summary.filter( ( s ) => s.framework === 'none' ).length,
+		withTests: found.length,
+		withNone: summary.filter( ( s ) => s.status === 'none' ).length,
 		repos: summary
 	};
 	fs.writeFileSync( summaryFile, JSON.stringify( summaryOutput, null, 2 ) + '\n' );
 
 	console.log( `\nResults written to ${ path.resolve( outputDir ) }/` );
-	console.log( `Summary: ${ summaryOutput.withWdio } wdio, ${ summaryOutput.withCypress } cypress, ${ summaryOutput.withBoth } both, ${ summaryOutput.withNone } none` );
+	console.log( `Summary: ${ found.length } with tests, ${ summaryOutput.withNone } without` );
 }
 
 main();
