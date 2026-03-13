@@ -652,6 +652,7 @@ async function buildTestMapRemote( provider, specFiles, filter ) {
 function repoSlug( url ) {
 	return url
 		.replace( /^https?:\/\//, '' )
+		.replace( /^[^/]+\/r\//, '' )
 		.replace( /\.git$/, '' )
 		.replace( /[^a-zA-Z0-9-]/g, '_' )
 		.replace( /_+/g, '_' )

@@ -17,9 +17,9 @@ Each repo gets its own JSON file in `results/`, along with a `summary.json`:
 ```
 results/
   summary.json
-  gerrit_wikimedia_org_r_mediawiki_core_tests.json
-  gerrit_wikimedia_org_r_mediawiki_extensions_CampaignEvents_tests.json
-  gerrit_wikimedia_org_r_mediawiki_extensions_GrowthExperiments_tests.json
+  mediawiki_core_tests.json
+  mediawiki_extensions_CampaignEvents_tests.json
+  mediawiki_extensions_GrowthExperiments_tests.json
 ```
 
 Edit `repos.txt` to add or remove repos. One URL per line, lines starting with `#` are comments.
@@ -34,7 +34,7 @@ node scan.js <repo-url-or-path>
 
 ```bash
 node scan.js https://gerrit.wikimedia.org/r/mediawiki/extensions/CampaignEvents
-# -> results/gerrit_wikimedia_org_r_mediawiki_extensions_CampaignEvents_tests.json
+# -> results/mediawiki_extensions_CampaignEvents_tests.json
 
 node scan.js ./my-project
 # -> results/my-project_tests.json
