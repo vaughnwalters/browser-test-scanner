@@ -1,6 +1,6 @@
 # Browser Test Scanner
 
-Scans git repositories for browser tests (WebdriverIO, Cypress) and outputs JSON files listing all test suites and test cases, grouped by spec file.
+Scans Gerrit repositories for browser tests (WebdriverIO, Cypress) and outputs JSON files listing all test suites and test cases, grouped by spec file.
 
 All results are written to the `results/` directory.
 
@@ -29,15 +29,12 @@ Edit `repos.txt` to add or remove repos. One URL per line, lines starting with `
 To scan just one repo at a time:
 
 ```bash
-node scan.js <repo-url-or-path>
+node scan.js <repo-url>
 ```
 
 ```bash
 node scan.js https://gerrit.wikimedia.org/r/mediawiki/extensions/CampaignEvents
 # -> results/mediawiki_extensions_CampaignEvents_tests.json
-
-node scan.js ./my-project
-# -> results/my-project_tests.json
 ```
 
 ## Output format
@@ -73,7 +70,7 @@ Results are grouped by spec file. Each file maps its `describe()` blocks to arra
 
 ```
 scan.js            # Scan all repos (default) or a single repo
-parser.js          # Shared parsing, API providers, and utilities
+parser.js          # Gitiles API, test parsing, and utilities
 repos.txt          # Default repo list
 ```
 
