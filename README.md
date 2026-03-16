@@ -6,6 +6,12 @@ All results are written to the `results/` directory.
 
 ## Usage
 
+Scan all repos and generate the wikitext listing:
+
+```bash
+node scan.js && node wikitext.js
+```
+
 ### Scan
 
 `scan.js` reads `repos.txt` and scans every repo in it:
@@ -28,7 +34,7 @@ Edit `repos.txt` to add or remove repos. One URL per line, lines starting with `
 
 ### Generate wikitext
 
-After scanning, generate a wikitext file listing all tests grouped by Core, Extensions, Skins, and Wikibase:
+`wikitext.js` reads the JSON results and generates a wikitext file listing all tests grouped by Core, Extensions, Skins, and Wikibase:
 
 ```bash
 node wikitext.js
@@ -70,7 +76,7 @@ Results are grouped by spec file. Each file maps its `describe()` blocks to arra
 scan.js            # Scan all repos in repos.txt
 wikitext.js        # Generate wikitext from scan results
 parser.js          # Gitiles API, test parsing, and utilities
-repos.txt          # Default repo list
+repos.txt          # List of repos to scan for tests
 ```
 
 ## Requirements
