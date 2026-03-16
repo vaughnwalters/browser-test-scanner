@@ -43,6 +43,8 @@ node wikitext.js
 
 ## Output format
 
+### scan.js
+
 Results are grouped by spec file. Each file maps its `describe()` blocks to arrays of `it()` test names. Nested describes are joined with ` > `.
 
 ```json
@@ -68,6 +70,22 @@ Results are grouped by spec file. Each file maps its `describe()` blocks to arra
     }
   }
 }
+```
+
+### wikitext.js
+
+Tests are listed under headings grouped by Core, Extensions, Skins, and Wikibase:
+
+```
+== Extensions ==
+
+=== CampaignEvents (wdio) ===
+
+* Edit Event Registration > can allow organizer to update event page and dates
+* Edit Event Registration > can allow organizer to change the event to be in person
+* Enable Event Registration @daily > is configured correctly
+* Enable Event Registration @daily > requires event data
+* Enable Event Registration @daily > can be enabled
 ```
 
 ## Project structure
