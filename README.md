@@ -37,6 +37,15 @@ node scan.js https://gerrit.wikimedia.org/r/mediawiki/extensions/CampaignEvents
 # -> results/mediawiki_extensions_CampaignEvents_tests.json
 ```
 
+## Generate wikitext
+
+After scanning, generate a wikitext file listing all tests grouped by Core, Extensions, Skins, and Wikibase:
+
+```bash
+node generate-wikitext.js
+# -> results/browser-tests.wiki
+```
+
 ## Output format
 
 Results are grouped by spec file. Each file maps its `describe()` blocks to arrays of `it()` test names. Nested describes are joined with ` > `.
@@ -69,9 +78,10 @@ Results are grouped by spec file. Each file maps its `describe()` blocks to arra
 ## Project structure
 
 ```
-scan.js            # Scan all repos (default) or a single repo
-parser.js          # Gitiles API, test parsing, and utilities
-repos.txt          # Default repo list
+scan.js               # Scan all repos (default) or a single repo
+generate-wikitext.js  # Generate wikitext listing of all tests
+parser.js             # Gitiles API, test parsing, and utilities
+repos.txt             # Default repo list
 ```
 
 ## Requirements
