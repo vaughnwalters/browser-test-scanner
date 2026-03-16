@@ -12,7 +12,7 @@ By default, `scan.js` reads `repos.txt` and scans every repo in it:
 node scan.js
 ```
 
-Each repo gets its own JSON file in `results/`, along with a `summary.json` and a `browser-tests.wiki` wikitext listing:
+Each repo gets its own JSON file in `results/`, along with a `summary.json` and a `browser-tests.wiki` that lists every test grouped by Core, Extensions, Skins, and Wikibase:
 
 ```
 results/
