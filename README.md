@@ -6,10 +6,10 @@ All results are written to the `results/` directory.
 
 ## Usage
 
-Scan all repos and generate the wikitext listing:
+Scan all repos, generate the wikitext, and update the wiki page:
 
 ```bash
-node scan.js && node wikitext.js
+node scan.js && node wikitext.js && node update-wiki.js
 ```
 
 ### Scan
@@ -40,6 +40,31 @@ Edit `repos.txt` to add or remove repos. One URL per line, lines starting with `
 node wikitext.js
 # -> results/browser-tests.wiki
 ```
+
+### Update wiki page
+
+`update-wiki.js` pushes the wikitext to a MediaWiki page. It reads credentials from a `.env` file (included in `.gitignore` and never committed).
+
+#### Setup
+
+1. Create a bot password at [Special:BotPasswords](https://www.mediawiki.org/wiki/Special:BotPasswords) with the **Edit existing pages** and **Create, edit, and move pages** grants.
+
+2. Create a `.env` file in the project root:
+
+```
+MW_USERNAME=YourUser@botname
+MW_PASSWORD=your-bot-password
+MW_API_URL=https://www.mediawiki.org/w/api.php
+MW_PAGE_TITLE=Page_Title
+```
+
+3. Run:
+
+```bash
+node update-wiki.js
+```
+
+If running on a remote server or CI, set the same variables as environment variables instead of using a `.env` file.
 
 ## Output format
 
@@ -93,8 +118,10 @@ Tests are listed under headings grouped by Core, Extensions, Skins, and Wikibase
 ```
 scan.js            # Scan all repos in repos.txt
 wikitext.js        # Generate wikitext from scan results
+update-wiki.js     # Push wikitext to a MediaWiki page
 parser.js          # Gitiles API, test parsing, and utilities
 repos.txt          # List of repos to scan for tests
+.env               # Bot credentials (not committed)
 ```
 
 ## Requirements

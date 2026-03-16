@@ -76,7 +76,11 @@ function main() {
 	}
 
 	const categoryOrder = [ 'Core', 'Extensions', 'Skins', 'Wikibase', 'Other' ];
+	const totalTests = Object.values( groups ).flat().reduce( ( sum, r ) => sum + r.tests.length, 0 );
 	const lines = [];
+
+	lines.push( `''Last updated: ${ new Date().toISOString().replace( 'T', ' ' ).replace( /\.\d+Z$/, ' UTC' ) } | ${ files.length } repos | ${ totalTests } tests''` );
+	lines.push( '' );
 
 	for ( const category of categoryOrder ) {
 		if ( !groups[ category ] ) {
@@ -101,7 +105,6 @@ function main() {
 
 	const wikiFile = path.resolve( resultsDir, 'browser-tests.wiki' );
 	fs.writeFileSync( wikiFile, lines.join( '\n' ) );
-	const totalTests = Object.values( groups ).flat().reduce( ( sum, r ) => sum + r.tests.length, 0 );
 	console.log( `Wikitext written to ${ wikiFile }` );
 	console.log( `${ files.length } repos, ${ totalTests } total tests` );
 }
