@@ -405,25 +405,6 @@ function repoSlug( url ) {
 }
 
 // ---------------------------------------------------------------------------
-// Output
-// ---------------------------------------------------------------------------
-
-/**
- * Write the JSON output file.
- *
- * @param {string} outputFile - Output file path
- * @param {Object} output - JSON output object
- */
-function writeOutput( outputFile, output ) {
-	const outputPath = path.resolve( outputFile );
-	fs.mkdirSync( path.dirname( outputPath ), { recursive: true } );
-	fs.writeFileSync( outputPath, JSON.stringify( output, null, 2 ) + '\n' );
-	console.log( `\nResults written to ${ outputPath }` );
-	const filePart = output.totalFiles ? `${ output.totalFiles } file(s), ` : '';
-	console.log( `Summary: ${ filePart }${ output.totalSuites } suite(s), ${ output.totalTests } test(s)` );
-}
-
-// ---------------------------------------------------------------------------
 // Exports
 // ---------------------------------------------------------------------------
 
@@ -431,6 +412,5 @@ module.exports = {
 	createProvider,
 	findSpecs,
 	buildTestMap,
-	repoSlug,
-	writeOutput
+	repoSlug
 };
