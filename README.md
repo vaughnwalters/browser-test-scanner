@@ -12,11 +12,12 @@ By default, `scan.js` reads `repos.txt` and scans every repo in it:
 node scan.js
 ```
 
-Each repo gets its own JSON file in `results/`, along with a `summary.json`:
+Each repo gets its own JSON file in `results/`, along with a `summary.json` and a `browser-tests.wiki` wikitext listing:
 
 ```
 results/
   summary.json
+  browser-tests.wiki
   mediawiki_core_tests.json
   mediawiki_extensions_CampaignEvents_tests.json
   mediawiki_extensions_GrowthExperiments_tests.json
@@ -35,15 +36,6 @@ node scan.js <repo-url>
 ```bash
 node scan.js https://gerrit.wikimedia.org/r/mediawiki/extensions/CampaignEvents
 # -> results/mediawiki_extensions_CampaignEvents_tests.json
-```
-
-## Generate wikitext
-
-After scanning, generate a wikitext file listing all tests grouped by Core, Extensions, Skins, and Wikibase:
-
-```bash
-node generate-wikitext.js
-# -> results/browser-tests.wiki
 ```
 
 ## Output format
@@ -78,10 +70,9 @@ Results are grouped by spec file. Each file maps its `describe()` blocks to arra
 ## Project structure
 
 ```
-scan.js               # Scan all repos (default) or a single repo
-generate-wikitext.js  # Generate wikitext listing of all tests
-parser.js             # Gitiles API, test parsing, and utilities
-repos.txt             # Default repo list
+scan.js            # Scan all repos (default) or a single repo
+parser.js          # Gitiles API, test parsing, and utilities
+repos.txt          # Default repo list
 ```
 
 ## Requirements
