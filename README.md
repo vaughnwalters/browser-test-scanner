@@ -34,7 +34,7 @@ Edit `repos.txt` to add or remove repos. One URL per line, lines starting with `
 
 ### Generate wikitext
 
-`wikitext.js` reads the JSON results and generates a wikitext file listing all tests grouped by Core, Extensions, Skins, and Wikibase:
+`wikitext.js` reads the JSON results from `scan.js` and generates a wikitext file listing all tests grouped by Core, Extensions, Skins, and Wikibase. Requires `scan.js` to be run first.
 
 ```bash
 node wikitext.js
